@@ -159,8 +159,6 @@ const char index_html[] PROGMEM = R"rawliteral(
 
       request.send();
     }
-
-    update_score();
   </script>
 </body>
 
