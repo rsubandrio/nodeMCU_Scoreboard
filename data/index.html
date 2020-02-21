@@ -26,8 +26,7 @@
       margin-top: 2rem;
     }
 
-    #score_one,
-    #score_two {
+    div.btn {
       background-color: #d2dd9e;
       color: rgb(226, 43, 113);
       text-align: center;
@@ -47,19 +46,22 @@
   <table>
     <tr>
       <td colspan="3">
-        <div id="score_one" class="btn">00</div>
+        <div id="display_l" class="btn" onclick="p('l')">00</div>
       </td>
       <td colspan="3">
-        <div id="score_two" class="btn">00</div>
+        <div id="display_r" class="btn" onclick="p('r')">00</div>
       </td>
     </tr>
     <tr>
-      <td><button id="btn_add_score_one" class="btn">+</button></td>
-      <td><button id="btn_min_score_one" class="btn">-</button></td>
-      <td><button id="btn_rst_score_one" class="btn">~</button></td>
-      <td><button id="btn_rst_score_two" class="btn">~</button></td>
-      <td><button id="btn_min_score_two" class="btn">-</button></td>
-      <td><button id="btn_add_score_two" class="btn">+</button></td>
+      <td><button class="btn" onclick="p('l')">+</button></td>
+      <td><button class="btn" onclick="m('l')">-</button></td>
+      <td><button class="btn" onclick="r('l')">~</button></td>
+      <td><button class="btn" onclick="r('r')">~</button></td>
+      <td><button class="btn" onclick="m('r')">-</button></td>
+      <td><button class="btn" onclick="p('r')">+</button></td>
+    </tr>
+    <tr>
+      <td colspan="6"><div id="status">Status: </div></td>
     </tr>
   </table>
   <footer>
@@ -73,97 +75,81 @@
   </footer>
 
   <script>
-    let point_one = 0;
-    let point_two = 0;
-    let score_one = document.getElementById("score_one");
-    let score_two = document.getElementById("score_two");
-    let btn_add_score_one = document.getElementById("btn_add_score_one");
-    let btn_min_score_one = document.getElementById("btn_min_score_one");
-    let btn_rst_score_one = document.getElementById("btn_rst_score_one");
-    let btn_rst_score_two = document.getElementById("btn_rst_score_two");
-    let btn_min_score_two = document.getElementById("btn_min_score_two");
-    let btn_add_score_two = document.getElementById("btn_add_score_two");
+    let score_l = 0;
+    let score_r = 0;
+    let prev_scorer = false;
+    let is_point = false;
+    let display_l = document.getElementById('display_l');
+    let display_r = document.getElementById('display_r');
+    let buttons = document.getElementsByClassName('btn');
 
-    score_one.addEventListener("click", function () {
-      point_one++;
-      update_score();
-    });
+    function p(side) {
+      side == 'l' ? score_l++ : score_r++;
+      prev_scorer !== side ? is_point = false : is_point = true;
+      prev_scorer = side;
+      update();
+    }
 
-    btn_add_score_one.addEventListener("click", function () {
-      point_one++;
-      update_score();
-    });
+    function m(side) {
+      side == 'l' ? score_l-- : score_r--;
+      update();
+    }
 
-    btn_min_score_one.addEventListener('click', function () {
-      point_one--;
-      update_score();
-    });
+    function r(side) {
+      side == 'l' ? score_l = 0 : score_r = 0;
+      is_point = "Whack";
+      prev_scorer = false;
+      update();
+    }
 
-    btn_rst_score_one.addEventListener("click", function () {
-      point_one = 0;
-      update_score();
-    });
+    function update()
+    {
+      score_l <= 0 || score_l > 30 ? score_l = 0 : score_l;
+      score_r <= 0 || score_r > 30 ? score_r = 0 : score_r;
 
-    score_two.addEventListener("click", function () {
-      point_two++;
-      update_score();
-    });
-
-    btn_add_score_two.addEventListener("click", function () {
-      point_two++;
-      update_score();
-    });
-
-    btn_min_score_two.addEventListener('click', function () {
-      point_two--;
-      update_score();
-    });
-
-    btn_rst_score_two.addEventListener("click", function () {
-      point_two = 0;
-      update_score();
-    });
-
-    function update_score() {
-      if (point_one > 30 || point_one < 1) {
-        point_one = 0;
+      let gameover = ((score_l == 21) && (score_r < 20)) || ((score_r == 21) && (score_l < 20)) || ((score_l >= 20) && (score_r >= 20) && (Math.abs(score_l - score_r) == 2)) || ((score_l == 30) || (score_r == 30));
+      let disp_score_l = score_l < 10 ? '0' + score_l : score_l;
+      let disp_score_r = score_r < 10 ? '0' + score_r : score_r;
+      let url = '/update?';
+      url += 'l=' + disp_score_l + '&r=' + disp_score_r + '&s=' + prev_scorer + '&ip=' + is_point;
+      if (gameover) {
+        url += '&gameover=1';
+        disableBtn(true);
+        setTimeout(function() {
+          score_l = score_r = 0;
+          update();
+          disableBtn(false);
+        }, 3000);
       }
-      if (point_two > 30 || point_two < 1) {
-        point_two = 0;
-      }
-      let url = "/update?";
-      let display_score_one = point_one < 10 ? "0" + point_one : point_one;
-      let display_score_two = point_two < 10 ? "0" + point_two : point_two;
-      score_one.innerHTML = display_score_one;
-      score_two.innerHTML = display_score_two;
-      url += "l=" + display_score_one + "&r=" + display_score_two;
-      let gameover = false;
-      if (point_one == 21 && point_two < 20) gameover = true;
-      if (point_two == 21 && point_one < 20) gameover = true;
-      if (point_one >= 20 && point_two >= 20 && Math.abs(point_one - point_two) == 2) gameover = true;
-      if (point_one == 30 || point_two == 30) gameover = true;
+      display_l.innerText = disp_score_l;
+      display_r.innerText = disp_score_r;
+      url += '&buster='+new Date().getTime();
+      sendRequest(url);
+    }
 
-      if (gameover == true) {
-        url += "&gameover=1";
-        point_one = point_two = 0;
-        update_score();
-      }
-
+    function sendRequest(url) {
+      let status_bar = document.getElementById('status');
       let request = new XMLHttpRequest();
-      request.open("GET", url, true);
-      request.onload = function () {
+      request.open('GET', url, true);
+      request.onload = function() {
         if (this.status >= 200 && this.status < 400) {
-          console.log("Berhasil! " + this.response);
+          resp = JSON.parse(this.response);
+          //JSON.parse()
+          status_bar.innerHTML = 'Status: Berhasil - respon server: ' + resp.status + " #" + resp.number;
         } else {
-          console.log("Sampai tapi error " + this.response);
+          status_bar.innerHTML = 'Status: Error - respon server: ' + this.response;
         }
-      };
-
-      request.onerror = function () {
-        console.log("Connection Error!!");
-      };
-
+      }
+      request.onerror = function() {
+        status_bar.innerHTML = 'Status: Error - Tidak ada respon dari server!';
+      }
       request.send();
+    }
+
+    function disableBtn(bool) {
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].disabled = bool;
+      }
     }
   </script>
 </body>
